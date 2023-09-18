@@ -13,6 +13,7 @@ def letter_probabilities(text) -> dict:
     ordered_letter_probabilities = {letter: round(letter_ocurrences[letter]/total_ocurrences, 3) \
                                     for letter in letters}
     # Returns them ordered
+    print(f"Entropía en el peor de los casos es {round(math.log(len(letters), 2), 3)}")
     return ordered_letter_probabilities
 
 # Generates to which code will each word translate.
@@ -50,6 +51,9 @@ def generate_codes(text, save_file_name) -> dict:
             {"".join(code_list): letter \
                 for (letter, code_list) in letter_codes.items()}
             , outfile)
+    expected_bits = round(expected_number_of_bits(ordered_letter_probabilities, 
+                                                  shannon_sizes), 3)
+    print(f"El número de bits esperados es {expected_bits}")
     return concatenated_codes
 
 # Our binary encoding will be a list of strings. NOT IN PLACE.
@@ -77,12 +81,20 @@ def binary_times_pow_2(binary_encoding: list, pow: int):
         result.append("0")
     return result
 
+def expected_number_of_bits(letter_probabilities, shannon_sizes):
+    result = 0
+    for letter in letter_probabilities.keys():
+        result += letter_probabilities[letter]*shannon_sizes[letter]
+    return result
+
+
 def encode(text: str, save_file_name):
     codes = generate_codes(text, save_file_name)
     response = ""
     # Have to specify lower because otherwise it won't find in codes.
     for letter in text:
         response += codes[letter]
+    print(f"El número total de bits usados para la encriptación es {len(response)}")
     return response
 
 # Compresses the text for each 8 bits.
@@ -145,13 +157,41 @@ def reverse_codification(codification: str, reverse_codes: dict):
 
 
 # Tests
+'''
 assert (binary_sum_one(list("01")) == list("10"))
 assert (binary_sum_one(list("11")) == list("100"))
 assert (binary_times_pow_2(list("110"), 3) == list("110000"))
 assert (generate_codes("aab", "test1") == {"a": "0", "b": "10"})
 assert (char_to_binary('b') == "1100010")
 assert (complete_char_to_binary('b') == "01100010")
-
-# Tests.
 print(compress("Hola222222", save_file_name="holi"))
 print(decompress("holi_compression.txt", "holi_reverse_codes.json"))
+'''
+
+executing = True
+while(executing):
+    initial_message = input("A continuación encuentra las opciones disponibles:\n" +
+                            '1. Encriptar un texto "m" en un archivo con nombre "n".\n' +
+                            '2. Desencriptar un archivo de nombre "n" con la codificación "c".\n' +
+                            "3. Salir.\n")
+    match initial_message:
+        case "1": 
+            text_name = input("Ingrese el nombre del archivo txt a comprimir.\n")
+            with open(text_name, "r", encoding="utf-8") as file:
+                text = file.read()
+                destiny_name = input("Ingrese el nombre del archivo destino (sin extensión ni .txt).\n")
+                compress(text, destiny_name)
+        case "2":
+            compressed_file = input("Ingrese el nombre del archivo comprimido," 
+                                    +" esta vez con el \".txt\".\n")
+            code_file = input("Ingrese el nombre del archivo que guardó la codificación. \n")
+            original_name = compressed_file[:compressed_file.rfind('_compression')] 
+            with open(f"{original_name}_decompressed.txt", "w", encoding="utf-8") as outfile:
+                result = decompress(compressed_file, code_file)
+                outfile.write(result)
+            print(f"En el archivo {original_name}_decompressed.txt encontrará el texto descomprimido.\n")
+            print(f"Entre medias, puede ver el texto aquí: \n{result}")
+        case "3":
+            executing = False
+        case _:
+            print("Opción no válida")
