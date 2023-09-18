@@ -184,7 +184,7 @@ while(executing):
         case "2":
             compressed_file = input("Ingrese el nombre del archivo comprimido," 
                                     +" esta vez con el \".txt\".\n")
-            code_file = input("Ingrese el nombre del archivo que guardó la codificación. \n")
+            code_file = input("Ingrese el nombre del archivo que guardó la codificación, con el \".json\". \n")
             original_name = compressed_file[:compressed_file.rfind('_compression')] 
             with open(f"{original_name}_decompressed.txt", "w", encoding="utf-8") as outfile:
                 result = decompress(compressed_file, code_file)
