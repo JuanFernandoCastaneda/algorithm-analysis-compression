@@ -44,8 +44,12 @@ def generate_codes(text, save_file_name) -> dict:
     concatenated_codes = {letter: "".join(code_list) \
             for (letter, code_list) in letter_codes.items()}
     # Before returning, we save them to a file.
-    with open(f"{save_file_name}_codes.json", "w") as outfile:
-        json.dump(concatenated_codes, outfile)
+    with open(f"{save_file_name}_reverse_codes.json", "w") as outfile:
+        # What we save, though, is the reverse, for easyness of decompression.
+        json.dump(
+            {"".join(code_list): letter \
+                for (letter, code_list) in letter_codes.items()}
+            , outfile)
     return concatenated_codes
 
 # Our binary encoding will be a list of strings. NOT IN PLACE.
@@ -79,19 +83,19 @@ def encode(text: str, save_file_name):
     # Have to specify lower because otherwise it won't find in codes.
     for letter in text:
         response += codes[letter]
-    print(response)
     return response
 
 # Compresses the text for each 8 bits.
+# IF THE LAST BYTE IS INCOMPLETE, A "1" IS ADDED.
 def compress(text: str, save_file_name):
     codification = encode(text, save_file_name)
     compression = ""
     for partition_beginning in range(0, len(codification), 8):
-        # Convert those nums to a byte.
-        partition_end = partition_beginning+8 \
-            if partition_beginning+8 <= len(codification) \
-            else len(codification)
-        char_num = int(codification[partition_beginning: partition_end], base=2)
+        # If the remaining is less than 8, add a 1 to record the value.
+        if partition_beginning+8 >= len(codification):
+            char_num = int("1" + codification[partition_beginning: len(codification)], base=2)
+        else:
+            char_num = int(codification[partition_beginning: partition_beginning+8], base=2)
         compression += chr(char_num)
     with open(f"{save_file_name}_compression.txt", "w", encoding="utf-8") as outfile:
         outfile.write(compression)
@@ -102,13 +106,19 @@ def decompress(compressed_file_name: str, code_file_name: str):
     with open(f"{compressed_file_name}", "r", encoding="utf-8") as file:
         compression = file.read()
     with open(f"{code_file_name}", "r", encoding="utf-8") as file:
-        code_table = json.loads(file.read())
-    print(code_table)
+        reverse_code_table = json.loads(file.read())
     codification = ""
+    len_last_char = 0
     for index, character in enumerate(compression):
-        codification += complete_char_to_binary(character) \
-            if index != len(compression)-1 else char_to_binary(character)
-    print(codification)
+        if index != len(compression)-1:
+            codification += complete_char_to_binary(character)
+        else:
+            codification += char_to_binary(character)
+            # EXPLANAITION MISSING. Remove the length of the 0b.
+            len_last_char = len(bin(ord(character)))-2
+    # Remove that extra character
+    codification = codification[:-len_last_char]+codification[-len_last_char+1:]
+    return reverse_codification(codification, reverse_code_table)
 
 # Converts char to ordinal and then to binary str. Then removes the "0b"
 # from the string.
@@ -122,6 +132,18 @@ def complete_char_to_binary(char):
         result = "0" + result
     return result
 
+def reverse_codification(codification: str, reverse_codes: dict):
+    carry = ""
+    result = ""
+    for bit in codification:
+        if carry+bit in reverse_codes:
+            result += reverse_codes[carry+bit]
+            carry = ""
+        else:
+            carry += bit
+    return result
+
+
 # Tests
 assert (binary_sum_one(list("01")) == list("10"))
 assert (binary_sum_one(list("11")) == list("100"))
@@ -131,6 +153,5 @@ assert (char_to_binary('b') == "1100010")
 assert (complete_char_to_binary('b') == "01100010")
 
 # Tests.
-print(compress("Hola amiguitos", save_file_name="holi"))
-decompress("holi_compression.txt", "holi_codes.json")
-#compress("Hola amiguitos")
+print(compress("Hola222222", save_file_name="holi"))
+print(decompress("holi_compression.txt", "holi_reverse_codes.json"))
