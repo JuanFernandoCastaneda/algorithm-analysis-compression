@@ -9,6 +9,10 @@
 
 Asegúrate de tener Python instalado en tu sistema. 
 
+## Shannon-Fano
+
+Este punto contiene el bono. Para usarlo solo es necesario correr la terminal interactiva y ponerle un nombre de archivo que esté guardado en la misma carpeta.
+
 ## Formato de Entrada
 El archivo de entrada puede ser cualquier archivo de texto.
 ## Salida
