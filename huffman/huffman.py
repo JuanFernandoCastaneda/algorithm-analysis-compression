@@ -63,23 +63,31 @@ def create_huffman_dictionary(huffman_tree):
     traverse_tree(huffman_tree, '')
     return dictionary
 
-# def huffman_tree_probability(huffman_tree):
-#     probabilities = {}
-#     total = huffman_tree.freq
-#     def traverse_tree(node, current_code):
-#         if node.isLeaf:
-#             probabilities[node.char] = node.freq/total
-#             return
-#         traverse_tree(node.left, current_code + '0')
-#         traverse_tree(node.right, current_code + '1')
-#     traverse_tree(huffman_tree, '')
-#     return probabilities
+def huffman_tree_probability(huffman_tree):
+    probabilities = {}
+    total = huffman_tree.freq
+    def traverse_tree(node, current_code):
+        if node.isLeaf:
+            probabilities[node.char] = node.freq/total
+            return
+        traverse_tree(node.left, current_code + '0')
+        traverse_tree(node.right, current_code + '1')
+    traverse_tree(huffman_tree, '')
+    return probabilities
 
 def calculate_entropy(text):
     unique = set(text)
     size = len(unique)
     entropy = math.log2(size)
     return entropy
+
+def calculate_average_length(huffman_tree):
+    probabilities = huffman_tree_probability(huffman_tree)
+    dictionary = create_huffman_dictionary(huffman_tree)
+    average_length = 0
+    for key, value in probabilities.items():
+        average_length += value * len(dictionary[key])
+    return average_length
 
 
 def encode_text(text, huffman_tree):
@@ -104,7 +112,6 @@ def decode_huffman_code(code, huffman_tree):
 
 if __name__ == '__main__':
     file = input("Escriba el nombre del archivo: ")
-    file = "./huffman/texto.txt"
     try :
         with open(file, "r") as f:
             text = f.read()
@@ -112,13 +119,23 @@ if __name__ == '__main__':
             encoded_text = encode_text(text, huffman_tree)
             # print("Arbol de Huffman: ")
             # print(huffman_tree)
+            print("----------------------------------------------")
             print("Texto codificado: ")
             print(encoded_text)
             decoded_text = decode_huffman_code(encoded_text, huffman_tree)
+            print("----------------------------------------------")
             print("Texto decodificado: ")
             print(decoded_text)
+            print("----------------------------------------------")
             print("Entropia en el peor de los casos: ")
             print(calculate_entropy(text))
+            print("----------------------------------------------")
+            print("Bits esperados:")
+            print(calculate_average_length(huffman_tree)*len(text))
+            print("----------------------------------------------")
+            print("Bits reales:")
+            print(len(encoded_text))
+            
     except FileNotFoundError:
         print("No se pudo abrir el archivo")
         exit()
