@@ -131,7 +131,7 @@ if __name__ == '__main__':
             print(calculate_entropy(text))
             print("----------------------------------------------")
             print("Bits esperados:")
-            print(calculate_average_length(huffman_tree)*len(text))
+            print(calculate_average_length(huffman_tree))
             print("----------------------------------------------")
             print("Bits reales:")
             print(len(encoded_text))
